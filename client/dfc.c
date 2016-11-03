@@ -185,6 +185,24 @@ int socket_creation(char* port)
 }
 
 
+void file_splitter(char* filename)
+{
+    char* split_cmd = malloc(300);
+    sprintf(split_cmd,"split --number=l/%d ${fspec} %s %s",4,filename,filename);
+    printf("%s\n",split_cmd );
+    if(system(split_cmd) == -1)
+    {
+        printf(RED"System Call Failed! Split\n"RESET);
+        exit(1);
+    }
+    else
+    {
+        printf(GRN"File split success\n"RESET);
+    }
+
+}
+
+
 void main(int argc , char *argv[])
 {
 
@@ -195,6 +213,10 @@ void main(int argc , char *argv[])
     char* server_port = data_finder("pass",0); //getting the root directory and storing it in variable ROOT
 
     printf("In Main, Server1 %s\n",server_port);
+
+
+    char* filename = "files/image.jpg";
+    file_splitter(filename);
 
 
     //char* alive_time = data_finder("KeepaliveTime");
