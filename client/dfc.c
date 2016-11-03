@@ -137,52 +137,7 @@ char* data_finder(char* format,int server_num)
 }
 
 
-int socket_creation(char* port)
-{
-    struct addrinfo server;
-    struct addrinfo *res, *p;
-    int socket_desc;
 
-
-    memset (&server, 0, sizeof(server));
-    // getaddrinfo for host
-    server.ai_family = AF_INET;
-    server.ai_socktype = SOCK_STREAM;
-    server.ai_flags = AI_PASSIVE;
-
-    printf(GRN"\nListening in Port %s\n"RESET,port );
-    if (getaddrinfo( NULL, port, &server, &res) != 0)
-    {
-        printf(RED"get address error"RESET);
-        exit(1);
-    }
-
-    for (p = res; p!=NULL; p=p->ai_next)
-    {
-        socket_desc = socket(p->ai_family, p->ai_socktype, 0);
-        if (socket_desc == -1) continue;
-        if (bind(socket_desc, p->ai_addr, p->ai_addrlen) == 0) break;
-        printf(MAG"Wait for sometime or Change the port \n"RESET);
-    }
-
-    if (p==NULL)
-    {
-        printf (RED"Socket Creation/Bind Issue\n"RESET);
-        exit(1);
-    }
-
-    freeaddrinfo(res);
-
-    // listen for incoming connections
-    if ( listen (socket_desc, 100) != 0 )
-    {
-        printf(RED"ERROR During Listening"RESET);
-        exit(1);
-    }
-
-    return socket_desc;
-
-}
 
 
 void file_splitter(char* filename)
