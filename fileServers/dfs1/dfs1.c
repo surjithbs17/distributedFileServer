@@ -145,6 +145,7 @@ int authentication(char* username,char* password)
 void main(int argc , char *argv[])
 {
     int socket_num;
+     struct sockaddr_in server , client;
     if (argc < 2)
     {
         printf("Less Arguments \nUsage: ./dfs1 /DFS1 portnum\n");
@@ -157,6 +158,26 @@ void main(int argc , char *argv[])
     strcpy(server_name,argv[1]);
 
     //printf("Return Value %d\n",authentication("Alice","Simplepassword") );
+
+
+    int server_sock = socket_creation(argv[2]);
+    int optval = 1;
+    setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR,(const void *)&optval , sizeof(int));
+    int len = sizeof(client);
+
+
+    while((client_sock = accept(socket_sock, (struct sockaddr *)&client, (socklen_t*)&len)) > 0)
+    {
+
+
+
+
+
+
+
+
+    }
+
     if(authentication("Alce","SimplePassword") == 0)
     {
         printf(GRN"Authentication Successful\n"RESET);
