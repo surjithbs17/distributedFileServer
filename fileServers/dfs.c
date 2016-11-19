@@ -199,7 +199,7 @@ char* md5calculator(char* filename)
     system(md5command);
     FILE* md5file = fopen("md5value.txt","r+");
     fscanf(md5file,"%s",value);
-    printf("\nMD5 Value - %s\n",value);
+    //rintf("\nMD5 Value - %s\n",value);
     system("rm md5value.txt");
     return value;
 }
@@ -217,32 +217,37 @@ int send_file_pair(int server_socket,char* filename,int file_num1,char* uname,in
     
     bzero(filename1,sizeof(filename1));
     
+
+
     /*
     bzero(uname,sizeof(uname));
     bzero(pword,sizeof(pword));
     uname = data_finder("user",0);
     pword = data_finder("pass",0);
     */
-    printf("Inside send file pair\n");
+    //printf("Inside send file pair\n");
     if(cmd == 1)
     {
-        sprintf(filename1,"%s/%s/ls_file.txt",server_file_path,uname);
-        printf("cmd 1 -list\n");
+        sprintf(filename1,"%s/%s/zzz_ls_file.txt",server_file_path,uname);
+        //printf("cmd 1 -list\n");
     }
     else if(cmd == 2)
     {
-        sprintf(filename1,"%s/%s/%sa%c",server_file_path,uname,filename,96+file_num1);
+        bzero(filename1,sizeof(filename1));
+        //printf("file_num %d",file_num1);
+        sprintf(filename1,"%s/%s/.%s.%d",server_file_path,uname,filename,file_num1);
     }
     
     
-    printf("File Name - %s\n",filename1 );
+
+    //printf("File Name - %s\n",filename1 );
     FILE *file;
 
     //printf(YEL"Inside send_file_pair\n"RESET);
 
     if ( (file=open(filename1, O_RDONLY))!=-1 )    //FILE FOUND
     {
-        printf("Filename - %s",filename1);
+        //printf("Filename - %s",filename1);
                     
         char* content_len = malloc(100);
         bzero(content_len,sizeof(content_len));
@@ -259,8 +264,8 @@ int send_file_pair(int server_socket,char* filename,int file_num1,char* uname,in
         {
             char* user_dir = malloc(200);
             bzero(user_dir,sizeof(user_dir));
-            sprintf(user_dir,"%s/%s/ls_file.txt",server_file_path,uname);
-            printf("user_dir(ls file name) - %s\n",user_dir );
+            sprintf(user_dir,"%s/%s/zzz_ls_file.txt",server_file_path,uname);
+            //printf("user_dir(ls file name) - %s\n",user_dir );
             //file_num1 = 0;
             char* content_len = malloc(100);
             bzero(content_len,sizeof(content_len));
@@ -270,7 +275,7 @@ int send_file_pair(int server_socket,char* filename,int file_num1,char* uname,in
             //FILE* file = fopen(user_dir,"r+");
             bzero(data_to_send,sizeof(data_to_send));
             sprintf(data_to_send,"AUTH SUCCESS %s",content_len);
-            printf("Data to send %s\n",data_to_send );
+            //printf("Data to send %s\n",data_to_send );
             int s;
 
             if((s = send(server_socket, data_to_send,strlen(data_to_send),0)) <= 0)
@@ -279,7 +284,7 @@ int send_file_pair(int server_socket,char* filename,int file_num1,char* uname,in
             }
             else
             {
-                printf("Sent ACK Auth success send file pair\n");
+                //printf("Sent ACK Auth success send file pair\n");
                 bzero(data_to_send,sizeof(data_to_send));
             }
             int bytes_read;
@@ -293,54 +298,87 @@ int send_file_pair(int server_socket,char* filename,int file_num1,char* uname,in
             }
             if(strcmp(recv_buf,"SEND") == 0)
             {
-                printf("Send command from client\n");
+                //printf("Send command from client\n");
             }
 
 
             while ( (bytes_read=read(file, data_to_send, BYTES)) > 0 )
             {    
-                printf("%s \nbytes_read - %d\n",data_to_send );
+                //printf("%s \nbytes_read - %d\n",data_to_send );
                 send (server_socket, data_to_send, bytes_read,0);
                 bzero(data_to_send,sizeof(data_to_send));
             }
-            printf("data_to_send %s bytes_read %d\n",data_to_send,bytes_read );
-            printf(GRN"File Sent Successfully 1\n"RESET);
+            //printf("data_to_send %s bytes_read %d\n",data_to_send,bytes_read );
+            printf(GRN"File Sent Successfully 1s file\n"RESET);
 
         }
         if(cmd == 2)
         {
-            strcpy(action,"get");
-            sprintf(send_buf,"Auth_string %s %s %s %d %s %s %s",uname,filename,file_num1,md5value,content_len,action);
-            if(send(server_socket , send_buf , strlen(send_buf),0) <= 0)
+            char* content_len = malloc(100);
+            bzero(content_len,sizeof(content_len));
+            int file_status;
+            if((file_status = doesFileExist(filename1)) == -1)
             {
-                printf(RED"Send failed\n"RESET);
-            }
-            
-            bzero(recv_buf,sizeof(recv_buf));
-            if(recv(server_socket , recv_buf , BYTES,0) <= 0)
-            {
-            
-                printf(RED"Send failed\n"RESET);
-            
-            }
+                    send(server_socket, "NO_FILE_EXISTS", 14, 0);
+                    printf("No File exists\n");
+                    return 10;
 
-             int bytes_read = 0;
-        
-            if(strcmp(recv_buf,"AUTH SUCCESS") == 0)
+            }
+            else
             {
+                 //send(server_socket, "FILE EXISTS", 11, 0);
+                content_len = getFilesize(filename1);     
+                //FILE* file = fopen(user_dir,"r+");
                 bzero(data_to_send,sizeof(data_to_send));
+                sprintf(data_to_send,"FILE_EXISTS %s %s",content_len,md5value);
+                //printf("Data to send %s  %d\n",data_to_send,strlen(data_to_send));
+                int s;
+
+                if((s = send(server_socket, data_to_send,strlen(data_to_send),0)) <= 0)
+                {
+                    printf("Send Error\n");
+                }
+                else
+                {
+                    //printf("Sent ACK Auth success send file pair %d\n",s);
+                    bzero(data_to_send,sizeof(data_to_send));
+                }
+                int bytes_read;
+
+                bzero(recv_buf,sizeof(recv_buf));
+                if(recv(server_socket , recv_buf , 4,0) <= 0)
+                {
+                
+                    printf(RED"Recv failed\n"RESET);
+                
+                }
+                if(strcmp(recv_buf,"SEND") == 0)
+                {
+                    printf("Send command from client\n");
+                }
+
+
                 while ( (bytes_read=read(file, data_to_send, BYTES)) > 0 )
                 {    
+                    //printf("%s \nbytes_read - %d\n",data_to_send );
                     send (server_socket, data_to_send, bytes_read,0);
                     bzero(data_to_send,sizeof(data_to_send));
                 }
-                printf(GRN"File Sent Successfully 1\n"RESET);
-            } 
+                //printf("data_to_send %s bytes_read %d\n",data_to_send,bytes_read );
+                printf(GRN"File Sent Successfully %s %d \n"RESET,filename,file_num1);
 
+
+
+
+
+            }
+
+
+           
         }
 
 
-        printf("send_buf %s\n",send_buf );
+        //printf("send_buf %s\n",send_buf );
 //        sprintf(send_buf,"Auth_string %s %s %s %d %s %s put",uname,pword,filename,file_num1,md5value,content_len);
        
 
@@ -382,11 +420,11 @@ void recv_chunk(char* uname,char* pword,char* filename,char* file_num,char* md5s
    int remain_data = file_size;
 
     sprintf(file_name,"%s.%s.%s",dir_path,filename,file_num);
-    printf("File Name =  %s\n", file_name);
+    //printf("File Name =  %s\n", file_name);
     
     file_p = fopen(file_name, "w+");
     int bytesReceived,no_of_times = 0;
-    printf("Inside recv_chunk\n");
+    //printf("Inside recv_chunk\n");
     bzero(recv_buf,sizeof(recv_buf));
     int read_bytes = BYTES;
     while(((bytesReceived = recv(client_sock, recv_buf, read_bytes,0)) > 0) && (remain_data > 0))
@@ -405,7 +443,7 @@ void recv_chunk(char* uname,char* pword,char* filename,char* file_num,char* md5s
             if(remain_data == 0)
             {
                 break;
-                printf("Breaking it\n");
+                //printf("Breaking it\n");
             }
 
         }
@@ -413,15 +451,15 @@ void recv_chunk(char* uname,char* pword,char* filename,char* file_num,char* md5s
         bzero(recv_buf,sizeof(recv_buf));
 
         
-        printf("\nReceive %d bytes and we hope :- %d bytes\n", bytesReceived, remain_data);
+        //printf("\nReceive %d bytes and we hope :- %d bytes\n", bytesReceived, remain_data);
         //printf("Passed print\n");
     }
 
 
-    printf("Out of loop\n");
+    //printf("Out of loop\n");
     fclose(file_p);
     
-    printf("Is it happening?\n");
+    //printf("Is it happening?\n");
     char* md5value = malloc(100);
     bzero(md5value,sizeof(md5value));
 
@@ -436,7 +474,7 @@ void recv_chunk(char* uname,char* pword,char* filename,char* file_num,char* md5s
 
 
     long long int total_bytes_recv = no_of_times*BYTES + bytesReceived;
-    printf("Num of bytes recieved - %lld\n",total_bytes_recv );
+    //printf("Num of bytes recieved - %lld\n",total_bytes_recv );
 }
 
 void serve_client(int client_sock, char* file_name,char* user,char* pword, char* file_num,char* md5value,char* action,char* content_len)
@@ -446,6 +484,19 @@ void serve_client(int client_sock, char* file_name,char* user,char* pword, char*
     char recv_buf[MESSAGE_LENGTH],send_buf[MESSAGE_LENGTH];
    
     
+
+    char* dir_path = malloc(200);
+    bzero(dir_path,sizeof(dir_path));
+
+
+
+    sprintf(dir_path,"%s/%s/",server_file_path,user);
+    if(mkdir(dir_path,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1)
+    {
+        printf("Looks like dir already exists\n");
+    }
+    chdir(dir_path);
+
     //sprintf(local_file_path,"%s/%s/%s",server_file_path,user,file_name);
     
     int s;
@@ -459,32 +510,24 @@ void serve_client(int client_sock, char* file_name,char* user,char* pword, char*
     }
 
 
-    printf("Inside serve client %s\n",action );
+    //printf("Inside serve client %s\n",action );
     if (strcmp(action,"put") == 0)
     {
-        printf("Inside Upload\n");
+        //printf("Inside Upload\n");
         recv_chunk(user,pword,file_name,file_num,md5value,client_sock,content_len);
     }
-        /*    }
-            bzero(recv_buf,sizeof(recv_buf));
-            s = recv(client_sock, recv_buf, MESSAGE_LENGTH, 0);
-            if(s > 0 )
-            {
-                sscanf(recv_buf,"%s %s %s %s %s",uname,pword,filename,filenum2,md5sum);
-                if(authentication(uname,pword) == 0)
-                {
-                    printf("Inside Upload\n");
-                    recv_chunk(uname,pword,filename,filenum2,md5sum,client_sock);
-                }
-                else
-                {
-                    printf(RED"Authentication not successful\n"RESET);
-                }
-            }
-            else
-                printf("File chunk Upload Completed  %d\n",s);
-        }
-        */ 
+
+    else if (strcmp(action,"get") == 0)
+    {
+        char* user_dir = malloc(200);
+        bzero(user_dir,sizeof(user_dir));
+        sprintf(user_dir,"%s/%s/",server_file_path,user);
+        chdir(user_dir);
+        //printf("inside get %s\n",user_dir );
+        send_file_pair(client_sock,file_name,atoi(file_num),user,2);
+
+
+    }
     
     else if (strcmp(action,"list") == 0)
     {
@@ -492,10 +535,10 @@ void serve_client(int client_sock, char* file_name,char* user,char* pword, char*
         bzero(user_dir,sizeof(user_dir));
         sprintf(user_dir,"%s/%s/",server_file_path,user);
         chdir(user_dir);
-        printf("inside list %s\n",user_dir );
-        system("ls -a > 'ls_file.txt'");
-        send_file_pair(client_sock,"ls_file.txt",0,user,1);
-        system("rm ls_file.txt");
+        //printf("inside list %s\n",user_dir );
+        system("ls -a > 'zzz_ls_file.txt'");
+        send_file_pair(client_sock,"zzz_ls_file.txt",0,user,1);
+        system("rm zzz_ls_file.txt");
        /* if((file_status = doesFileExist(local_file_path)) == 0)
         {
             send(client_sock, "DFS OK_EXIST\n", 13, 0);
@@ -524,7 +567,7 @@ void client_handler(int client_sock,char* server_file_path)
     bzero(md5value,sizeof(md5value));
     int s;
 
-    printf("Inside handler\n%s\n",recv_buf);
+    //printf("Inside handler\n%s\n",recv_buf);
     
 
 
@@ -539,7 +582,7 @@ void client_handler(int client_sock,char* server_file_path)
     while((s = recv(client_sock, recv_buf, MESSAGE_LENGTH, 0)) > 0 )
     {
         //strcpy(recv_buf_backup, &recv_buf);
-        printf("Recv Buf %s\n",recv_buf );
+        //printf("Recv Buf %s\n",recv_buf );
         if(strncmp("Auth_string",recv_buf,11) == 0)
         {
             sscanf(recv_buf,"Auth_string %s %s %s %s %s %s %s",uname,pword,file_name,file_num,md5value,content_len,action);
@@ -554,6 +597,16 @@ void client_handler(int client_sock,char* server_file_path)
             else
             {
                 printf(RED"Authentication not successful\n"RESET);
+                int s;
+                if((s = send(client_sock, "AUTH FAILURE", 12,0)) <= 0)
+                {
+                    printf("Send Error\n");
+                }
+                else
+                {
+                    printf("Sent Error Message\n");
+                }
+
 
             }
 
@@ -574,27 +627,6 @@ void client_handler(int client_sock,char* server_file_path)
 
 }
 
-void list()
-{
-    
-    FILE *ls_fp;
-    system("ls > 'ls_file.txt'");
-    ls_fp = fopen("ls_file.txt","r");
-    char parsed_buf[100];
-    //gets();
-    while(fscanf(ls_fp,"%s",parsed_buf) != EOF) 
-    {
-        printf("%s\n",parsed_buf);
-        //printf("Inside while\n");
-        bzero(parsed_buf,sizeof(parsed_buf));
-    }
-    
-}
-
-void find_file_num(char* file_name)
-{
-
-}
 
 void main(int argc , char *argv[])
 {
@@ -617,10 +649,10 @@ void main(int argc , char *argv[])
     getcwd(cwd, sizeof(cwd));
     sprintf(concatenated_dir,"%s/%s",cwd,argv[1]);
     chdir(concatenated_dir);
-    printf("Before strcpy\n");
+    //printf("Before strcpy\n");
     server_file_path=malloc(MESSAGE_LENGTH);
     strcpy(server_file_path,concatenated_dir);    
-    printf("Current Working Directory - %s \n%s\n",cwd,concatenated_dir );
+    //printf("Current Working Directory - %s \n%s\n",cwd,concatenated_dir );
     //printf("Return Value %d\n",authentication("Alice","Simplepassword") );
 
     //list();
@@ -635,7 +667,7 @@ void main(int argc , char *argv[])
     while((client_sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&len)) > 0)
     {
 
-        printf(BLU"Master Accepted Sock --- %d\nThread Generated Sock --- %d\n"RESET,server_sock,client_sock);
+        //printf(BLU"Master Accepted Sock --- %d\nThread Generated Sock --- %d\n"RESET,server_sock,client_sock);
         pthread_t client_serve_thread;
         
         if( pthread_create( &client_serve_thread , NULL ,  &client_handler , (void *)client_sock) < 0)
@@ -644,7 +676,7 @@ void main(int argc , char *argv[])
             exit(1);
         }
          
-        printf(BLU "Inside Accept While Loop\n" RESET);
+        //printf(BLU "Inside Accept While Loop\n" RESET);
 
 
     }
